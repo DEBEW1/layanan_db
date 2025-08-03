@@ -1,0 +1,28 @@
+name: pengaduan_masyarakat
+description: Aplikasi Layanan Pengaduan Masyarakat.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  flutter_localizations:
+    sdk: flutter
+
+  http: ^1.2.1
+  flutter_secure_storage: ^9.2.2
+  image_picker: ^1.1.2
+  intl: 
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true

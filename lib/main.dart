@@ -5,10 +5,16 @@ import 'package:pengaduan_masyarakat/screens/auth/login_screen.dart';
 import 'package:pengaduan_masyarakat/screens/main/dashboard_screen.dart';
 import 'package:pengaduan_masyarakat/services/auth_service.dart';
 import 'package:pengaduan_masyarakat/utils/app_theme.dart';
+import 'package:pengaduan_masyarakat/config.dart'; // <-- TAMBAH
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('id_ID', null);
+  
+  // TAMBAH: Load konfigurasi IP
+  await AppConfig.loadFromStorage();
+  AppConfig.printCurrentConfig();
+  
   runApp(const MyApp());
 }
 

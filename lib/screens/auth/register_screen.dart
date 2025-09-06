@@ -89,7 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: Text(message),
         backgroundColor: isError ? AppTheme.errorColor : AppTheme.secondaryColor,
         behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 5), // Durasi lebih lama untuk error
+        duration: Duration(seconds: isError ? 5 : 3),
       ),
     );
   }
@@ -99,7 +99,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Daftar Akun Baru'),
-        // Tambah tombol debug
         actions: [
           IconButton(
             icon: const Icon(Icons.info_outline),
@@ -108,7 +107,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 context: context,
                 builder: (context) => AlertDialog(
                   title: const Text('Debug Info'),
-                  content: const Column(
+                  content: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -139,38 +138,46 @@ class _RegisterScreenState extends State<RegisterScreen> {
               CustomTextField(
                 label: 'Nama Lengkap',
                 controller: _nameController,
-                validator: (val) => (val?.isEmpty ?? true) ? 'Nama tidak boleh kosong' : null,
+                validator: (val) => (val == null || val.isEmpty) ? 'Nama tidak boleh kosong' : null,
               ),
               CustomTextField(
                 label: 'Email',
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                validator: (val) => (val?.isEmpty ?? true) ? 'Email tidak boleh kosong' : null,
+                validator: (val) => (val == null || val.isEmpty) ? 'Email tidak boleh kosong' : null,
               ),
               CustomTextField(
                 label: 'Nomor Telepon',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
-                validator: (val) => (val?.isEmpty ?? true) ? 'Telepon tidak boleh kosong' : null,
+                validator: (val) => (val == null || val.isEmpty) ? 'Telepon tidak boleh kosong' : null,
               ),
               CustomTextField(
                 label: 'Password',
                 controller: _passwordController,
                 obscureText: _obscurePassword,
-                validator: (val) => (val?.length ?? 0) < 6 ? 'Password minimal 6 karakter' : null,
-                 suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                validator: (val) {
+                  if (val == null || val.isEmpty) return 'Password tidak boleh kosong';
+                  if (val.length < 6) return 'Password minimal 6 karakter';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                 ),
               ),
               CustomTextField(
                 label: 'Konfirmasi Password',
                 controller: _confirmPasswordController,
                 obscureText: _obscureConfirmPassword,
-                validator: (val) => val != _passwordController.text ? 'Password tidak cocok' : null,
-                 suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
-                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                validator: (val) {
+                  if (val == null || val.isEmpty) return 'Konfirmasi password tidak boleh kosong';
+                  if (val != _passwordController.text) return 'Password tidak cocok';
+                  return null;
+                },
+                suffixIcon: IconButton(
+                  icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility),
+                  onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                 ),
               ),
               const SizedBox(height: 24),

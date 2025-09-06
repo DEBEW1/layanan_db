@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../models/complaint_model.dart';
@@ -6,6 +8,7 @@ import '../../services/complaint_service.dart';
 import '../../utils/app_theme.dart';
 import '../../utils/extensions.dart';
 import '../../widgets/custom_text_field.dart';
+import '../../widgets/universal_image.dart';
 
 class CreateComplaintScreen extends StatefulWidget {
   const CreateComplaintScreen({super.key});
@@ -21,7 +24,12 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
   final ComplaintService _complaintService = ComplaintService();
 
   ComplaintCategory _selectedCategory = ComplaintCategory.infrastruktur;
-  File? _selectedImage;
+  
+  // Universal image handling
+  File? _selectedImageFile; // Untuk mobile
+  Uint8List? _selectedImageBytes; // Untuk web
+  String? _selectedImagePath; // Path untuk upload
+  
   bool _isLoading = false;
 
   Future<void> _pickImage() async {
@@ -29,13 +37,27 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
         source: ImageSource.gallery,
-        imageQuality: 80, // Kompresi gambar agar tidak terlalu besar
+        imageQuality: 80,
       );
+      
       if (pickedFile != null) {
-        setState(() => _selectedImage = File(pickedFile.path));
+        if (kIsWeb) {
+          // Untuk Web - baca sebagai bytes
+          final bytes = await pickedFile.readAsBytes();
+          setState(() {
+            _selectedImageBytes = bytes;
+            _selectedImagePath = pickedFile.path;
+          });
+        } else {
+          // Untuk Mobile - gunakan File
+          setState(() {
+            _selectedImageFile = File(pickedFile.path);
+            _selectedImagePath = pickedFile.path;
+          });
+        }
       }
     } catch (e) {
-      _showSnackBar('Gagal memilih gambar.');
+      _showSnackBar('Gagal memilih gambar: ${e.toString()}');
     }
   }
 
@@ -49,19 +71,19 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
         title: _titleController.text,
         description: _descriptionController.text,
         category: _selectedCategory,
-        evidencePath: _selectedImage?.path,
+        evidencePath: _selectedImagePath,
       );
 
       if (!mounted) return;
 
       if (success) {
         _showSnackBar('Pengaduan berhasil dikirim!', isError: false);
-        Navigator.of(context).pop(true); // Kirim 'true' untuk refresh
+        Navigator.of(context).pop(true);
       } else {
         _showSnackBar('Gagal mengirim pengaduan.');
       }
     } catch (e) {
-      _showSnackBar('Terjadi kesalahan. Coba lagi.');
+      _showSnackBar('Terjadi kesalahan: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -133,24 +155,58 @@ class _CreateComplaintScreenState extends State<CreateComplaintScreen> {
       children: [
         const Text('Bukti Foto (Opsional)', style: TextStyle(fontWeight: FontWeight.bold)),
         const SizedBox(height: 8),
-        if (_selectedImage != null)
+        
+        // Tampilkan gambar yang dipilih
+        if (_hasSelectedImage())
           Stack(
             alignment: Alignment.topRight,
             children: [
-              Image.file(_selectedImage!, fit: BoxFit.cover, width: double.infinity, height: 200),
-              IconButton(
-                icon: const CircleAvatar(backgroundColor: Colors.black54, child: Icon(Icons.close, color: Colors.white)),
-                onPressed: () => setState(() => _selectedImage = null),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: UniversalImage(
+                  imageSource: kIsWeb ? _selectedImageBytes : _selectedImageFile,
+                  width: double.infinity,
+                  height: 200,
+                  fit: BoxFit.cover,
+                ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () => setState(() {
+                    _selectedImageFile = null;
+                    _selectedImageBytes = null;
+                    _selectedImagePath = null;
+                  }),
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.black54,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(4),
+                    child: const Icon(Icons.close, color: Colors.white, size: 20),
+                  ),
+                ),
               ),
             ],
           )
         else
+          // Tombol pilih gambar
           OutlinedButton.icon(
             icon: const Icon(Icons.attach_file),
-            label: const Text('Pilih Gambar'),
+            label: const Text(kIsWeb ? 'Pilih Gambar (Web)' : 'Pilih Gambar'),
             onPressed: _pickImage,
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
           ),
       ],
     );
+  }
+
+  bool _hasSelectedImage() {
+    return (kIsWeb && _selectedImageBytes != null) || 
+           (!kIsWeb && _selectedImageFile != null);
   }
 }

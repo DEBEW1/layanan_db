@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../services/auth_service.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../utils/app_theme.dart';
+import '../../config.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -24,6 +25,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscureConfirmPassword = true;
 
   @override
+  void initState() {
+    super.initState();
+    // Print debug info saat screen dibuka
+    print('🔧 Debug Info:');
+    print('Base URL: ${AppConfig.baseUrl}');
+    print('API URL: ${AppConfig.apiUrl}');
+    print('Register endpoint: ${AppConfig.apiUrl}/register.php');
+  }
+
+  @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
@@ -40,12 +51,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = true);
 
     try {
+      print('🚀 Starting registration...');
+      print('Name: ${_nameController.text.trim()}');
+      print('Email: ${_emailController.text.trim()}');
+      print('Phone: ${_phoneController.text.trim()}');
+      
       final result = await _authService.register(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         phone: _phoneController.text.trim(),
         password: _passwordController.text,
       );
+      
+      print('📨 Registration result: $result');
       
       if (!mounted) return;
 
@@ -56,7 +74,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         _showSnackBar(result['message'] ?? 'Terjadi kesalahan');
       }
     } catch (e) {
-      _showSnackBar('Gagal terhubung ke server. Periksa koneksi Anda.');
+      print('❌ Registration exception: $e');
+      _showSnackBar('Gagal terhubung ke server. Periksa koneksi Anda.\nError: ${e.toString()}');
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -70,6 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         content: Text(message),
         backgroundColor: isError ? AppTheme.errorColor : AppTheme.secondaryColor,
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 5), // Durasi lebih lama untuk error
       ),
     );
   }
@@ -77,7 +97,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Daftar Akun Baru')),
+      appBar: AppBar(
+        title: const Text('Daftar Akun Baru'),
+        // Tambah tombol debug
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Debug Info'),
+                  content: const Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Base URL: ${AppConfig.baseUrl}'),
+                      Text('API URL: ${AppConfig.apiUrl}'),
+                      Text('Register: ${AppConfig.apiUrl}/register.php'),
+                    ],
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('OK'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(

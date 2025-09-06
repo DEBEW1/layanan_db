@@ -7,6 +7,14 @@ class AppConfig {
   static const String _ipAddress = '192.168.1.14'; // <-- GANTI ALAMAT IP INI
 
   // Jangan ubah bagian di bawah ini
-  static const String baseUrl = 'http://$_ipAddress/layanan';
+  static const String baseUrl = 'http://$_ipAddress/layanan';  // ← PERBAIKAN: http dan /layanan
+  
+  // Debug info - hapus setelah testing
+  static void printUrls() {
+    print('Base URL: $baseUrl');
+    print('API URL: $apiUrl');
+    print('Register URL: $apiUrl/register.php');
+    print('Login URL: $apiUrl/login.php');
+  }
   static const String apiUrl = '$baseUrl/api';
 }

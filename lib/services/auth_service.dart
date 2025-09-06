@@ -16,9 +16,16 @@ class AuthService {
     required String password,
   }) async {
     try {
+      // Print URL untuk debugging
+      const url = '${AppConfig.apiUrl}/register.php';
+      print('📡 Calling API: $url');
+      
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/register.php'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json',
+        },
         body: json.encode({
           'nama': name,
           'email': email,
@@ -27,24 +34,47 @@ class AuthService {
         }),
       );
 
+      print('📋 Response Status: ${response.statusCode}');
+      print('📋 Response Body: ${response.body}');
+
       if (response.statusCode == 200) {
-        return json.decode(response.body);
+        final responseData = json.decode(response.body);
+        return responseData;
       } else {
-        return {'status': 'error', 'message': 'Gagal terhubung ke server.'};
+        return {
+          'status': 'error', 
+          'message': 'Server error: ${response.statusCode}'
+        };
       }
     } catch (e) {
-      return {'status': 'error', 'message': 'Terjadi kesalahan: ${e.toString()}'};
+      print('❌ Register Error: $e');
+      return {
+        'status': 'error', 
+        'message': 'Koneksi gagal: ${e.toString()}'
+      };
     }
   }
 
   // Fungsi untuk login
   Future<bool> login(String email, String password) async {
     try {
+      const url = '${AppConfig.apiUrl}/login.php';
+      print('📡 Calling API: $url');
+      
       final response = await http.post(
-        Uri.parse('${AppConfig.apiUrl}/login.php'),
-        headers: {'Content-Type': 'application/json; charset=UTF-8'},
-        body: json.encode({'email': email, 'password': password}),
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json; charset=UTF-8',
+          'Accept': 'application/json',
+        },
+        body: json.encode({
+          'email': email, 
+          'password': password
+        }),
       );
+
+      print('📋 Response Status: ${response.statusCode}');
+      print('📋 Response Body: ${response.body}');
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
@@ -56,7 +86,7 @@ class AuthService {
       }
       return false;
     } catch (e) {
-      // Jika terjadi error (misal, tidak ada koneksi), kembalikan false
+      print('❌ Login Error: $e');
       return false;
     }
   }
